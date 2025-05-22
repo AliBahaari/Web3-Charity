@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react'
-import Charity from '../artifacts/contracts/Transfer.sol/Charity.json'
+import Charity from '../artifacts/contracts/Charity.sol/Charity.json'
 import { ethers } from 'ethers'
 
-const charityAddress = '0xc281A14F004092880F91a1C682FaD3d73f8E2969'
+const charityAddress = '0x9ccc284B42960C1feF0f96924d51Abccfc3Cd93c'
 
 function App() {
   const [fullName, setFullName] = useState('')
-  const [donor, setDonor] = useState<{
-    fullName: string
-    amount: string
-  } | null>(null)
+  const [donor, setDonor] = useState<
+    { fullName: string; amount: string }[] | null
+  >(null)
 
   const handleDonate = async () => {
     if (typeof window.ethereum !== 'undefined') {
@@ -20,7 +19,7 @@ function App() {
       const signer = provider.getSigner()
       const contract = new ethers.Contract(charityAddress, Charity.abi, signer)
 
-      const ethAmount = '0.0005'
+      const ethAmount = '0.0003'
 
       const trx = await contract.donate(fullName, {
         value: ethers.utils.parseEther(ethAmount),
@@ -42,16 +41,22 @@ function App() {
         provider
       )
 
-      try {
-        const data = await contract.donors(signer.getAddress())
-
-        setDonor({
-          fullName: data[0],
-          amount: ethers.utils.formatEther(data[1]),
-        })
-      } catch (error) {
-        console.log(error)
+      let i = 0
+      const donations = []
+      for (;;) {
+        try {
+          const data = await contract.donors(signer.getAddress(), i)
+          donations.push({
+            fullName: data[0],
+            amount: ethers.utils.formatEther(data[1]),
+          })
+          i++
+        } catch (_) {
+          break
+        }
       }
+
+      setDonor(donations)
     }
   }
 
@@ -69,7 +74,14 @@ function App() {
       />
       <button onClick={handleDonate}>Donate</button>
       <hr />
-      {donor ? `${donor.fullName} / ${donor.amount} ETH` : 'Not found'}
+      {donor && donor?.length > 0
+        ? donor.map((i) => (
+            <div>
+              <p>{i.fullName}</p>
+              <p>{i.amount}</p>
+            </div>
+          ))
+        : "You haven't donated!"}
     </>
   )
 }
