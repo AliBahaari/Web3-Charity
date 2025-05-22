@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Charity from '../artifacts/contracts/Charity.sol/Charity.json'
 import { ethers } from 'ethers'
+import './App.css'
 
 const charityAddress = '0x9ccc284B42960C1feF0f96924d51Abccfc3Cd93c'
 
@@ -25,6 +26,7 @@ function App() {
         value: ethers.utils.parseEther(ethAmount),
       })
       await trx.wait()
+      fetchDonors()
     }
   }
 
@@ -68,20 +70,25 @@ function App() {
 
   return (
     <>
-      <input
-        type="text"
-        onChange={(event) => setFullName(event.target.value)}
-      />
-      <button onClick={handleDonate}>Donate</button>
-      <hr />
-      {donor && donor?.length > 0
-        ? donor.map((i) => (
-            <div>
-              <p>{i.fullName}</p>
-              <p>{i.amount}</p>
-            </div>
+      <div className="formContainer">
+        <input
+          type="text"
+          onChange={(event) => setFullName(event.target.value)}
+        />
+        <button onClick={handleDonate}>Donate</button>
+      </div>
+
+      <div className="senderDonations">
+        {donor && donor?.length > 0 ? (
+          donor.map((i, index) => (
+            <span key={index}>
+              {i.fullName} / {i.amount} ETH
+            </span>
           ))
-        : "You haven't donated!"}
+        ) : (
+          <span className="youHaveNotDonatedText">You haven't donated!</span>
+        )}
+      </div>
     </>
   )
 }
